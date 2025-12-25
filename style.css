@@ -1,0 +1,10 @@
+body{
+	font-family: sans-serif;
+    margin: 0;
+    padding: 2rem;
+
+}
+
+#startAnalysis{
+	display: none;
+}
