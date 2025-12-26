@@ -7,13 +7,18 @@ const successTag =document.getElementById("success");
 const analysisButtonTag= document.getElementById("startAnalysis");
 const resultsContainerTag= document.getElementById("resultsContainer");
 const allowedFileTypes =['text/xml'];
+const flowElements =['actionCalls','recordLookups','screens','decisions','recordUpdates','recordDeletes','assignments','loops','subflows','waits','collectionProcessors','transforms','recordCreates'];
+const dmlInsideLoops=[,'recordUpdates','recordDeletes'];
+const soqlInsideLoops=['recordLookups'];
+const hardCodedRegex = /\b(001|003|005|006|00Q|00G|00D|a0[A-Za-z0-9])[A-Za-z0-9]{12,15}\b/
 analysisButtonTag.addEventListener("click", ruleRunner);
 let xmlText='';
 const praser = new DOMParser();
 let xmlDOM = undefined;
 let flowNode = undefined;
-
-
+let loopingIndex=0;
+let completedReferences= new Set();
+let stackingLoops = new Map();
 let flowDataObject = {};
 let isFlowParsedSuccessFully = false;
 
@@ -51,13 +56,12 @@ function ruleRunner(){
 		let res=results[index];
 		let miniString=`${res.ruleId}-	${res.category}	${res.priority}	${res.result.finalResult}`;
 		miniString = res.successMessage ? miniString+ `=>${res.successMessage}` : miniString+ `=>${res.errorMessage}`;
-		console.log(res.failedElements);
 		if(res.result?.failedElements?.length>0){
 			let subString ='';
 			for(let fal of res.result?.failedElements){
 				subString=subString.length>0 ? subString+` , ${fal}` : `${fal}`
 			}
-			miniString+=`,Failed Due to thse elements [${subString}]`;
+			miniString+=`,Failed Due to thse elements ${subString}`;
 		}
 		finalResultString+=miniString+'<br>';
 		
@@ -66,6 +70,70 @@ function ruleRunner(){
 	resultsContainerTag.innerHTML =finalResultString;
 }
 
+function findHardCodedIds(node,path=""){
+	if(node.nodeType == Node.ELEMENT_NODE){
+		let currentpath = path ? `${path}/${node.nodeName}`: node.nodeName;
+		const childrenArray = Array.from(node.childNodes);
+		const filtered=childrenArray.filter(child=> child.nodeType === 1 && child.tagName ==='name');
+		currentpath = filtered[0]?.textContent ? currentpath+`(${filtered[0].textContent})` : currentpath; 
+		if(node.textContent && node.textContent.trim()){
+			let text= node.textContent.trim();
+			if(!text.includes("!{")){
+				const match = text.match(hardCodedRegex);
+				if(match && (text.length== 15 || text.length==18)  && !flowDataObject.hardCodedIds.has(text)){
+					flowDataObject['hardCodedIdFound']= true;
+					flowDataObject.hardCodedIdPaths.push(currentpath);
+					flowDataObject.hardCodedIds.add(text);
+				}
+			}
+		}
+		
+		node.childNodes.forEach(childNode=>{findHardCodedIds(childNode,currentpath)});
+	}
+}
+
+function loopingThroughReferences(targetReference,node){
+	
+	if(node.nodeType == Node.ELEMENT_NODE){
+		const childrenArray = Array.from(node.childNodes);
+		const filtered=childrenArray.filter(child=> child.nodeType === 1 && child.tagName ==='name');
+		let elementName=filtered[0]?.textContent;
+		if(targetReference==elementName){
+			completedReferences.add(targetReference);
+			const targetChildrenArray = Array.from(childrenArray.filter(child=> child.tagName=='connector')[0]?.children)?.filter(subChild=>subChild.tagName=='targetReference');
+			targetReference= targetChildrenArray[0] ? targetChildrenArray[0].textContent : targetReference;
+			console.log(targetReference,elementName);
+			stackingLoops.set(node.tagName,targetReference);
+			if(flowDataObject.loopNamesArray.includes(targetReference)){
+				if(stackingLoops.has('recordLookups')){
+					flowDataObject.isSOQLInsideLoop=true;
+					flowDataObject.soqlLoopNamesArray.push(stackingLoops.get('recordLookups'));
+				}
+				if(stackingLoops.has('recordUpdates')){
+					flowDataObject.isDMLInsideLoop=true;
+					flowDataObject.soqlLoopNamesArray.push(stackingLoops.get('recordUpdates'));
+				}
+				if(stackingLoops.has('recordDeletes')){
+					flowDataObject.isDMLInsideLoop=true;
+					flowDataObject.soqlLoopNamesArray.push(stackingLoops.get('recordDeletes'));
+				}
+				if(stackingLoops.has('recordCreates')){
+					flowDataObject.isDMLInsideLoop=true;
+					flowDataObject.soqlLoopNamesArray.push(stackingLoops.get('recordCreates'));
+				}
+				return;
+			}
+			loopingIndex=-1;
+			//return loopingThroughReferences(targetReference,flowNode);
+		}
+	}
+	loopingIndex= completedReferences.has(targetReference) ? loopingIndex+2:loopingIndex+1;
+	let arrayChildren= Array.from(flowNode.children);
+	if(loopingIndex<arrayChildren.length){
+		loopingThroughReferences(targetReference,arrayChildren[loopingIndex]);
+	}
+	
+}
 
 submitFormTag.addEventListener("submit", (e)=>{
 	e.preventDefault();
@@ -91,14 +159,31 @@ submitFormTag.addEventListener("submit", (e)=>{
 	 reader.onload = function (){
 		flowDataObject = {};
 		flowDataObject['availableElements']=[];
+		flowDataObject['totalElementsCount']=0;
+		flowDataObject['hardCodedIdFound']= false;
+		flowDataObject['hardCodedIdPaths']= [];
+		flowDataObject['hardCodedIds'] = new Set();
+		flowDataObject['isSOQLInsideLoop'] = false;
+		flowDataObject['soqlLoopNamesArray'] = [];
+		flowDataObject['isDMLInsideLoop'] = false;
+		flowDataObject['dmlLoopNamesArray']=[];
+		flowDataObject['loopNamesArray']=[];
+		loopingIndex=0;
+		completedReferences = new Set();
+		stackingLoops = new Map();
 		xmlText= reader.result;
 		//console.log(xmlText);
 		xmlDOM = praser.parseFromString(xmlText,'text/xml');
+		
 		if(xmlDOM.children[0].nodeName=='Flow'){
 			flowNode = xmlDOM.children[0];
+			findHardCodedIds(flowNode);
 			let children = flowNode.children;
 			let processMetadata={};
 			for(let child of children){
+				if(flowElements.includes(child.nodeName)){
+					flowDataObject['totalElementsCount'] = flowDataObject['totalElementsCount']+1;
+				}
 				if(child.nodeName=='label'){
 					flowDataObject['flowName'] = child.textContent;
 				}else if(child.nodeName=='apiVersion'){
@@ -128,6 +213,8 @@ submitFormTag.addEventListener("submit", (e)=>{
 							varDataObject['defaultValue']= varChild.textContent;
 						}else if(varChild.nodeName=='scale'){
 							varDataObject['decimalPlace']= varChild.textContent;
+						}else if(varChild.nodeName=='description'){
+							varDataObject['description']= varChild.textContent;
 						}
 					}
 					if(!Array.isArray(flowDataObject.variables)){
@@ -168,12 +255,25 @@ submitFormTag.addEventListener("submit", (e)=>{
 							loopDataObject['collectionReference']=loopChild.textContent;
 						}else if(loopChild.nodeName=='iterationOrder'){
 							loopDataObject['iterationOrder']=loopChild.textContent;
+						}else if(loopChild.nodeName=='name'){
+							flowDataObject.loopNamesArray.push(loopChild.textContent);
+						}else if(loopChild.nodeName=='nextValueConnector'){
+							console.log('inside target value connector',);
+							loopingIndex=0;
+							completedReferences = new Set();
+							stackingLoops = new Map();
+							const targetChildArray = Array.from(loopChild.children).filter(subChild=>subChild.tagName=='targetReference');
+							if(targetChildArray[0]?.textContent){
+								loopingThroughReferences(targetChildArray[0]?.textContent,flowNode);
+							}
+							
 						}
 					}
-					if(!Array.isArray(loopDataObject.loops)){
+					if(!Array.isArray(flowDataObject.loops)){
 						flowDataObject['loops']=[];
 					}
 					flowDataObject.loops.push(loopDataObject);
+					
 				}else if(child.nodeName=='processType'){
 					flowDataObject['type']=child.textContent;
 				}else if(child.nodeName=='processMetadataValues'){
