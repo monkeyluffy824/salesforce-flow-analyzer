@@ -168,6 +168,8 @@ submitFormTag.addEventListener("submit", (e)=>{
 		flowDataObject['isDMLInsideLoop'] = false;
 		flowDataObject['dmlLoopNamesArray']=[];
 		flowDataObject['loopNamesArray']=[];
+		flowDataObject['isFaultsPresentForAllDMLElements']=true;
+		flowDataObject['dmlElementsWithoutFaults']=[];
 		loopingIndex=0;
 		completedReferences = new Set();
 		stackingLoops = new Map();
@@ -291,7 +293,31 @@ submitFormTag.addEventListener("submit", (e)=>{
 							}
 						}
 					}
+				}else if(child.nodeName=='recordUpdates'){
+					const childname= Array.from(child.children).filter(subChild=>subChild.tagName=='name')[0].textContent;
+					const faultChildNodes = Array.from(child.children).filter(subChild=>subChild.tagName=='faultConnector');
+					
+					if(faultChildNodes.length<=0){
+						console.log(faultChildNodes);
+						flowDataObject['isFaultsPresentForAllDMLElements']=false;
+						flowDataObject.dmlElementsWithoutFaults.push(childname);
+					}
+				}else if(child.nodeName=='recordDeletes'){
+					const childname= Array.from(child.children).filter(subChild=>subChild.tagName=='name')[0].textContent;
+					const faultChildNodes = Array.from(child.children).filter(subChild=>subChild.tagName=='faultConnector');
+					if(!faultChildNodes || faultChildNodes.length>0){
+						flowDataObject['isFaultsPresentForAllDMLElements']=false;
+						flowDataObject.dmlElementsWithoutFaults.push(childname);
+					}
+				}else if(child.nodeName=='recordCreates'){
+					const childname= Array.from(child.children).filter(subChild=>subChild.tagName=='name')[0].textContent;
+					const faultChildNodes = Array.from(child.children).filter(subChild=>subChild.tagName=='faultConnector');
+					if(!faultChildNodes || faultChildNodes.length>0){
+						flowDataObject['isFaultsPresentForAllDMLElements']=false;
+						flowDataObject.dmlElementsWithoutFaults.push(childname);
+					}
 				}
+				
 			}
 			flowDataObject['processMetaData']=processMetadata;
 			if(flowDataObject.description){

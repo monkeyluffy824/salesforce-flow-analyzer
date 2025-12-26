@@ -115,4 +115,20 @@ export const rulesObjectMain={
 						return resObject;
 					}
 				},
+	"RULE-009": {ruleId:"RULE-009", category:"Best Practices", priority:"Medium", successMessage: "No DML Operations without fault paths found", errorMessage: "Found DML Operation(s) without fault path.", executeFunction: (flowDataObject)=>{
+						let resObject={};
+						resObject['finalResult']=true;
+						if(!flowDataObject?.isFaultsPresentForAllDMLElements){
+							resObject['failedElements']=[];
+							resObject['finalResult']=false;
+							let miniString='';
+							for(let ind in flowDataObject.dmlElementsWithoutFaults){
+									miniString+=`${flowDataObject.dmlElementsWithoutFaults[ind]}, `;
+							}
+							resObject.failedElements.push(`The following DML Operations [${miniString}] found without fault paths`);
+						}
+						
+						return resObject;
+					}
+				}
 };
