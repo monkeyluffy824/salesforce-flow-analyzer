@@ -130,5 +130,56 @@ export const rulesObjectMain={
 						
 						return resObject;
 					}
-				}
+				},
+	"RULE-010": {ruleId:"RULE-010", category:"Best Practices", priority:"High", successMessage: "No SOQL Opeartions without null checks are found", errorMessage: "Found SOQL Opeartions without null checks", executeFunction: (flowDataObject)=>{
+						let resObject={};
+						resObject['finalResult']=true;
+						if(!flowDataObject?.areAllNullChecksPresent){
+							resObject['failedElements']=[];
+							resObject['finalResult']=false;
+							let miniString='';
+							for(let ind in flowDataObject.missinglookupReferences){
+									miniString+=`${flowDataObject.missinglookupReferences[ind]}, `;
+							}
+							resObject.failedElements.push(`The following DML Operations [${miniString}] found without null checks`);
+						}
+						
+						return resObject;
+					}
+				},
+	"RULE-011": {ruleId:"RULE-011", category:"Maintainability", priority:"Low", successMessage: "Formulas are not too complex", errorMessage: "Found complex formula(s)", executeFunction: (flowDataObject)=>{
+						let resObject={};
+						resObject['finalResult']=true;
+						let miniArray=[];
+						resObject['failedElements']=[];
+						flowDataObject?.formulas?.forEach(entry=>{
+							if(entry?.expression?.length>300){
+								resObject['finalResult'] = false;
+								miniArray.push(entry.name);
+							}
+						});
+						if(miniArray.length>0){
+							let miniString='';
+							miniArray.forEach(entry=>miniString+=`${entry}, `);
+							resObject.failedElements.push(`The following formulaes aee complex [${miniString}]`);
+						}
+						
+						return resObject;
+					}
+				},
+	"RULE-012":	{ruleId:"RULE-012", category:"Best Practices", priority:"Low", successMessage: "No unused Variables found", errorMessage: "Found unused variable(s)", executeFunction: (flowDataObject)=>{
+						let resObject={};
+						resObject['finalResult']=true;
+						resObject['failedElements']=[];
+						if(flowDataObject['areUnusedVariablesFound']){
+							resObject['finalResult']=false;
+							let miniString='';
+							flowDataObject.unusedVariablenames?.forEach(name=>{
+								miniString+=`${name}, `;
+							});
+							resObject.failedElements.push(`The following unused variables [${miniString}] found.`);
+						}				
+						return resObject;
+					}
+				},		
 };

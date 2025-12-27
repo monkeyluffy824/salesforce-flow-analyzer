@@ -21,6 +21,8 @@ let completedReferences= new Set();
 let stackingLoops = new Map();
 let flowDataObject = {};
 let isFlowParsedSuccessFully = false;
+let outputReferencesSet = new Set();
+let desicionsReferencesSet= new Set();
 
 let rulesObject=rulesObjectMain; // There will be total of 12-15 rules, which will be Stored in local storage along with preferences.
 
@@ -135,6 +137,46 @@ function loopingThroughReferences(targetReference,node){
 	
 }
 
+function findingNullChecks(){
+	
+	for(let child of desicionsReferencesSet){
+		let desicionCondtions=[];
+		Array.from(child.children).filter(subChild => subChild.tagName === 'rules').forEach(grandChild => {
+			const grandChildChildren = Array.from(grandChild.children);
+			const conditions = grandChildChildren.filter(smallest => smallest.tagName === 'conditions');
+			if (conditions.length > 0) {
+				desicionCondtions.push(conditions);
+			}
+		});
+		if(desicionCondtions.length>0){
+			desicionCondtions.forEach(child=>{
+				child.forEach(abc=> {
+					Array.from(abc.children).filter(grandChild=>grandChild.tagName=='leftValueReference')?.forEach(grandChild2=>{
+						if(outputReferencesSet.has(grandChild2.textContent)){
+							Array.from(child[0].children).filter(gc=>gc.tagName=='operator').forEach(subZero=>{
+								if(subZero.textContent=='IsNull'){
+									console.log(grandChild2.textContent);
+									outputReferencesSet.delete(grandChild2.textContent);
+								}
+							});
+						}
+					});
+				});
+			});
+		}
+		
+	}
+}
+
+function findUnusedVariables(xmlText,varName){
+	const regExp= new RegExp(varName,'g');
+	const matches = xmlText.match(regExp);
+	if(matches?.length==1){
+		flowDataObject['areUnusedVariablesFound']=true;
+		flowDataObject['unusedVariablenames'].push(varName);
+	}
+}
+
 submitFormTag.addEventListener("submit", (e)=>{
 	e.preventDefault();
 	errorTag.textContent='';
@@ -170,6 +212,8 @@ submitFormTag.addEventListener("submit", (e)=>{
 		flowDataObject['loopNamesArray']=[];
 		flowDataObject['isFaultsPresentForAllDMLElements']=true;
 		flowDataObject['dmlElementsWithoutFaults']=[];
+		flowDataObject['areUnusedVariablesFound']=false;
+		flowDataObject['unusedVariablenames']=[];
 		loopingIndex=0;
 		completedReferences = new Set();
 		stackingLoops = new Map();
@@ -316,8 +360,24 @@ submitFormTag.addEventListener("submit", (e)=>{
 						flowDataObject['isFaultsPresentForAllDMLElements']=false;
 						flowDataObject.dmlElementsWithoutFaults.push(childname);
 					}
+				}else if(child.nodeName=='recordLookups'){
+					const childname= Array.from(child.children).filter(subChild=>subChild.tagName=='name')[0].textContent;
+					const faultChildNodes = Array.from(child.children).filter(subChild=>subChild.tagName=='outputReference');
+					if(!faultChildNodes || faultChildNodes.length>0){
+						
+						for(let ind in faultChildNodes){
+							let element = faultChildNodes[ind];
+							outputReferencesSet.add(element.textContent);
+						}
+						
+					}else{
+						outputReferencesSet.add(childname);
+					}
+				}else if(child.nodeName=='decisions'){
+					const childname= Array.from(child.children).filter(subChild=>subChild.tagName=='name')[0].textContent;
+					desicionsReferencesSet.add(child);
+					
 				}
-				
 			}
 			flowDataObject['processMetaData']=processMetadata;
 			if(flowDataObject.description){
@@ -325,8 +385,19 @@ submitFormTag.addEventListener("submit", (e)=>{
 			}else{
 				flowDataObject['hasDescription'] = false;
 			}
+			findingNullChecks();
+			if(outputReferencesSet.size==0){
+				flowDataObject['areAllNullChecksPresent']=true;
+				flowDataObject['missinglookupReferences']= [];
+			}else{
+				flowDataObject['areAllNullChecksPresent']=false;
+				flowDataObject['missinglookupReferences']= Array.from(outputReferencesSet);
+			}
 			console.log(flowDataObject);
 			isFlowParsedSuccessFully = true;
+			flowDataObject.variables?.forEach(varName=>{
+				findUnusedVariables(xmlText,varName.name);
+			});
 			successTag.textContent='Flow parsed successfully,to start analysis please click on Start Analysis Button.'
 		}
 		console.log(isFlowParsedSuccessFully,analysisButtonTag.style.display);
