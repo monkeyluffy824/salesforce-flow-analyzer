@@ -1,0 +1,148 @@
+@font-face {
+  font-family: 'Satoshi-LightItalic';
+  src: url('../fonts/Satoshi-LightItalic.woff2') format('woff2'),
+       url('../fonts/Satoshi-LightItalic.woff') format('woff');
+  font-weight: 300;
+  font-display: swap;
+  font-style: italic;
+}
+@font-face {
+  font-family: 'Satoshi-BlackItalic';
+  src: url('../fonts/Satoshi-BlackItalic.woff2') format('woff2'),
+       url('../fonts/Satoshi-BlackItalic.woff') format('woff');
+  font-weight: 900;
+  font-display: swap;
+  font-style: italic;
+}
+
+@font-face {
+  font-family: 'Manrope-ExtraLight';
+  src: url('../fonts/Manrope-ExtraLight.woff2') format('woff2'),
+       url('../fonts/Manrope-ExtraLight.woff') format('woff');
+  font-weight: 200;
+  font-display: swap;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Manrope-Regular';
+  src: url('../fonts/Manrope-Regular.woff2') format('woff2'),
+       url('../fonts/Manrope-Regular.woff') format('woff');
+  font-weight: 400;
+  font-display: swap;
+  font-style: normal;
+}
+
+
+
+
+
+
+
+
+body{
+	font-family: "Manrope",sans-serif;
+    margin: 0;
+    padding: 2rem;
+
+}
+
+#startAnalysis{
+	display: none;
+}
+
+.container h1 {
+  font-family: "Satoshi", system-ui, sans-serif;
+  font-weight: 600;
+}
+
+h1 {
+  font-family: "Manrope", system-ui, sans-serif;
+  font-weight: 600;
+}
+
+p {
+  font-family: "Manrope", system-ui, sans-serif;
+  font-weight: 600;
+}
+
+.header-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr; 
+  gap: 10rem;
+}
+
+.tabs-card input[type="radio"] { display: none; }
+.tabs-card label {
+  display: inline-block;
+  padding: 6px 12px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-right: 4px;
+  font-family: "Satoshi", sans-serif;
+  font-weight: 500;
+  transition: border-color 0.2s;
+}
+.tabs-card .tab-content { display: none; padding-top: 8px; font-family: "Manrope", sans-serif; font-size: 0.875rem; }
+#tab1:checked ~ #content1,
+#tab2:checked ~ #content2 { display: block; }
+#tab1:checked + label,
+#tab2:checked + label { border-color: #007aff; }
+
+.file-upload-wrapper {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.5rem;     
+  align-items: center;
+  flex-wrap: wrap; 
+}
+
+input[type="file"] {
+  flex: 1;         
+  max-width: 800px; 
+  font-size: 0.8rem !important;
+  padding: 4px 6px !important;
+}
+
+input[type="submit"] {
+  flex: none;         
+  width: auto !important;  
+  display: inline-block !important;
+  padding: 4px 10px !important;
+  font-size: 0.8rem !important;
+  white-space: nowrap;
+  max-width: 600px;
+}
+
+.full-width-card {
+  width: 100% !important;      
+  max-width: none !important;
+  margin: 0 auto;    
+  padding: 1rem;  
+  box-sizing: border-box;
+}
+
+.file-grid{
+	display:grid;
+	grid-template-columns: 1fr 1fr;
+	gap : 1rem;
+}
+
+#file-details-upload{
+	display: none;
+}
+
+#error{
+	display: none;
+}
+
+.right-most {
+  justify-self: end; 
+}
+
+#donwloadAsCSVButton{
+	display: none;
+}
+
+.analysis-button{
+	max-width: 250px;
+}

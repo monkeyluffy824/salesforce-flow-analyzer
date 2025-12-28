@@ -3,15 +3,23 @@ console.log('Happy Flow!!!');
 const submitFormTag = document.getElementById("uploadForm");
 const fileInputTag = document.getElementById("fileInput");
 const errorTag = document.getElementById("error");
+const errorTagPara = document.getElementById("errorPara");
 const successTag =document.getElementById("success");
 const analysisButtonTag= document.getElementById("startAnalysis");
-const resultsContainerTag= document.getElementById("resultsContainer");
+const analysisMainButtonTag = document.getElementById("startAnalysisButton");
+const resultsContainerTag= document.getElementById("resultTable");
+const downloadAsCSVButtonTag = document.getElementById("donwloadAsCSVButton");
+donwloadAsCSVButton.addEventListener('click',()=>{
+	downloadcsv(finalResultsObject);
+})
+resultsContainerTag.innerHTML='';
+const fileDetailsContainerTag = document.getElementById("file-details-upload")
 const allowedFileTypes =['text/xml'];
 const flowElements =['actionCalls','recordLookups','screens','decisions','recordUpdates','recordDeletes','assignments','loops','subflows','waits','collectionProcessors','transforms','recordCreates'];
 const dmlInsideLoops=[,'recordUpdates','recordDeletes'];
 const soqlInsideLoops=['recordLookups'];
 const hardCodedRegex = /\b(001|003|005|006|00Q|00G|00D|a0[A-Za-z0-9])[A-Za-z0-9]{12,15}\b/
-analysisButtonTag.addEventListener("click", ruleRunner);
+analysisMainButtonTag.addEventListener("click", ruleRunner);
 let xmlText='';
 const praser = new DOMParser();
 let xmlDOM = undefined;
@@ -23,8 +31,43 @@ let flowDataObject = {};
 let isFlowParsedSuccessFully = false;
 let outputReferencesSet = new Set();
 let desicionsReferencesSet= new Set();
+let finalResultsObject=undefined;
 
-let rulesObject=rulesObjectMain; // There will be total of 12-15 rules, which will be Stored in local storage along with preferences.
+let rulesObject=rulesObjectMain; // There will be total of 12 rules, which will be Stored in local storage along with preferences in future verisons.
+
+
+
+fileInputTag.addEventListener('change',(event)=>{
+	const file = event.target.files[0]; 
+	fileDetailsContainerTag.style.display = "none";
+	fileDetailsContainerTag.style.display = "inline-block";
+	const fileName = document.getElementById('fileName');
+	const fileSize = document.getElementById('fileSize');
+	fileName.textContent=`File Name: ${file.name}`;
+	fileSize.textContent= `File Size: ${formatFileSize(file.size)}`;
+	
+});
+
+function formatFileSize(bytes) {
+  const sizes = ['Bytes', 'KB', 'MB'];
+  if (bytes === 0) return '0 Bytes';
+  const i = Math.floor(Math.log(bytes) / Math.log(1024)); // determine size unit
+  const size = bytes / Math.pow(1024, i);
+  return size.toFixed(2) + ' ' + sizes[i]; // keep 2 decimal places
+}
+
+function renderRulesTable(){
+	const rulesTableBody = document.getElementById('rulesBody');
+	Array.from(Object.values(rulesObject)).forEach(rule=>{
+		const row = document.createElement('tr');
+		row.innerHTML = ` 
+		  <td scope="row">${rule.ruleName}</td>
+		  <td>${rule.ruleExplaination}</td>
+		  <td>${rule.category}</td>
+		  <td>${rule.priority}</td>`;
+		rulesTableBody.appendChild(row);
+	});
+}
 
 function rulesExecutor(){
 	console.log(rulesObject);
@@ -35,6 +78,7 @@ function rulesExecutor(){
 		resObject['result'] = rule.executeFunction(flowDataObject);
 		resObject['category'] = rule.category;
 		resObject['priority'] = rule.priority;
+		resObject['ruleName'] = rule.ruleName;
 		if(resObject['result'].finalResult){
 			resObject['successMessage']=rule.successMessage;
 		}else{
@@ -48,28 +92,70 @@ function rulesExecutor(){
 	return resultsObject;
 }
 
+function downloadcsv(results){
+	const separator = ',';
+	let headerString= `Rule Name,Category,Priority,Result`;
+	const csvRows=[];
+	csvRows.push(headerString);
+	results.forEach(res=>{
+		let rowString=`${res.ruleName}${separator}${res.category}${separator}${res.priority}${separator}${res.miniString}`;
+		csvRows.push(rowString);
+	});
+	let csvString= csvRows.join('\n');
+	const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+	const url = URL.createObjectURL(blob);
+	const link = document.createElement('a');
+	link.href = url;
+	link.download = `${flowDataObject.flowName}_Analysis_results`;
+	link.click();
+    	
+}
+
 function ruleRunner(){
+	resultsContainerTag.innerHTML='';
 	let finalResultString='';
-	resultsContainerTag.innerHTML ='';
+	resultsContainerTag.innerHTML=`<div class="overflow-auto">
+					  <table class="striped">
+						<thead>
+						  <tr>
+							<th scope="col">Name</th>
+							<th scope="col">Category</th>
+							<th scope="col">Priority</th>
+							<th scope="col">Result</th>
+						  </tr>
+						</thead>
+						<tbody id="resultsTableBody">
+						 
+						</tbody>
+					  </table>
+					</div>`;
 	let results=rulesExecutor();
 	console.log(results);
+	const resTabBody= document.getElementById('resultsTableBody');
 	for(let index in results){
 		
 		let res=results[index];
-		let miniString=`${res.ruleId}-	${res.category}	${res.priority}	${res.result.finalResult}`;
-		miniString = res.successMessage ? miniString+ `=>${res.successMessage}` : miniString+ `=>${res.errorMessage}`;
+		let miniString=``;
+		miniString += res.result.finalResult ?  `Pass` : `Fail`;
 		if(res.result?.failedElements?.length>0){
 			let subString ='';
 			for(let fal of res.result?.failedElements){
-				subString=subString.length>0 ? subString+` , ${fal}` : `${fal}`
+				subString=subString.length>0 ? subString+` ; ${fal}` : `${fal}`
 			}
-			miniString+=`,Failed Due to thse elements ${subString}`;
+			miniString+=`- Due to these elements ${subString}`;	
 		}
-		finalResultString+=miniString+'<br>';
+		res['miniString']=miniString;
+		const row = document.createElement('tr');
+		row.innerHTML = ` 
+		  <td scope="row">${res.ruleName}</td>
+		  <td>${res.category}</td>
+		  <td>${res.priority}</td>
+		  <td>${miniString}</td>`;
+		resTabBody.appendChild(row);
 		
 	}
-	
-	resultsContainerTag.innerHTML =finalResultString;
+	downloadAsCSVButtonTag.style.display ="inline-block";
+	finalResultsObject=results;
 }
 
 function findHardCodedIds(node,path=""){
@@ -177,22 +263,29 @@ function findUnusedVariables(xmlText,varName){
 	}
 }
 
+
+renderRulesTable();
 submitFormTag.addEventListener("submit", (e)=>{
+	downloadAsCSVButtonTag.style.display="none";
 	e.preventDefault();
-	errorTag.textContent='';
+	errorTagPara.textContent='';
 	successTag.textContent='';
 	resultsContainerTag.innerHTML ='';
 	isFlowParsedSuccessFully=false;
 	analysisButtonTag.style.display="none";
+	errorTag.style.display =  "none";
+	
 	 if(fileInputTag.files.length===0){
-		 errorTag.textContent='Please select a file to submit';
+		 errorTag.style.display = "inline-block" ;
+		 errorTagPara.textContent='Please select a file to submit';
 		 return;
 	 }
 	 
 	 const file= fileInputTag.files[0];
 	 console.log(file.type);
 	 if(!allowedFileTypes.includes(file.type)){
-		errorTag.textContent='Only xml files are allowed to analyze';
+		errorTag.style.display = "inline-block" ;
+		errorTagPara.textContent='Only xml files are allowed to analyze';
 		 return; 
 	 }
 	 
@@ -406,3 +499,4 @@ submitFormTag.addEventListener("submit", (e)=>{
 	 }
 	 
 });
+

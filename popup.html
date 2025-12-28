@@ -1,17 +1,106 @@
 <head>
-	<link rel="stylesheet" href="./style.css">
+	<title>Salesforce Flow Analyzer</title>
+	<link rel="stylesheet" href="./css/style.css">
+	<link rel="stylesheet" href="./css/pico.min.css">
 </head>
 <body>
-	<h1>Welcome to Salesforce Static Flow Analyzer!!!</h1>
-	<form  method="post" enctype="multipart/form-data" id="uploadForm">
-		<input type="file" name="files" id="fileInput">
-		<input type="submit" value="Upload">
-	</form>
-	<p id="error"></p>
-	<p id="success"></p>
-	<button id="startAnalysis">Start Analysis</button>
-	<p id="resultsContainer"></p>
+    <section class="header-grid" style="align-items: center; margin-bottom: 1rem;>
+		<header class="left">
+		  <hgroup>
+			<h1><svg fill="#000000" width="80px" height="80px" viewBox="0 0 24 24" id="analysis-left" data-name="Flat Line" xmlns="http://www.w3.org/2000/svg" class="icon flat-line"><circle id="secondary" cx="8" cy="10" r="3" style="fill: rgb(44, 169, 188); stroke-width: 2;"></circle><path id="primary" d="M5.83,12.12,3,15M8,7a3,3,0,1,0,3,3A3,3,0,0,0,8,7Zm3,10h6m-2-4h2" style="fill: none; stroke: rgb(0, 0, 0); stroke-linecap: round; stroke-linejoin: round; stroke-width: 2;"></path><path id="primary-2" data-name="primary" d="M8,3H20a1,1,0,0,1,1,1V20a1,1,0,0,1-1,1H8a1,1,0,0,1-1-1V17" style="fill: none; stroke: rgb(0, 0, 0); stroke-linecap: round; stroke-linejoin: round; stroke-width: 2;"></path></svg> Salesforce Flow Analyzer</h1>
+			<p>A Browser Extension that analyzes Salesforce Flow XML Files for best practices, performance issues and common mistakes, providing developers with instant feedback</p>
+		  </hgroup>
+		</header>
+		<div class="right-most">
+			<a href="https://www.buymeacoffee.com/panangipalliSaiCharan"><img src="https://img.buymeacoffee.com/button-api/?text=Buy me a book&emoji=📖&slug=panangipalliSaiCharan&button_colour=5F7FFF&font_colour=ffffff&font_family=Cookie&outline_colour=000000&coffee_colour=FFDD00" /></a>
+		</div>
+	</section>
+	<main >
+      <article class="full-width-card">
+	    <div class="file-grid">
+			<section id="form">
+		     <h3>Upload Flow XML Files</h3>
+				<form  method="post" enctype="multipart/form-data" id="uploadForm" class="file-upload-wrapper">
+					<input type="file" name="files" id="fileInput">
+					<input type="submit" value="Upload" class="secondary">
+				</form>
+			</section>
+			<div id="file-details-upload">
+				<h4>File Details</h4>
+				<ul id="fileDetailsList">
+				  <li id="fileName"></li>
+				  <li id="fileSize"></li>
+				</ul>
+			</div>
+		</div>
+	  </article>	
+	  <article class="full-width-card" style="margin-top:1rem;" id="startAnalysis">
+		  <h3>Analysis</h3>
+		  <div class="tabs-card">
+			<input type="radio" name="tabs" id="tab1" checked>
+			<label for="tab1">Analyze</label>
+
+			<input type="radio" name="tabs" id="tab2">
+			<label for="tab2">Rules Book</label>
+			
+			<div class="tab-content" id="content1">
+				
+				<p id="success"></p>
+				<div id="buttonGrid" class="header-grid">
+					<button class="contrast analysis-button" id="startAnalysisButton">Start Analysis</button>
+					<button class="outline contrast right-most" id="donwloadAsCSVButton">Download as CSV</button>
+				</div>
+				<br>
+				
+				<section id="resultTable">
+					<div class="overflow-auto">
+					  <table class="striped">
+						<thead>
+						  <tr>
+							<th scope="col">Name</th>
+							<th scope="col">Category</th>
+							<th scope="col">Priority</th>
+							<th scope="col">Result</th>
+						  </tr>
+						</thead>
+						<tbody id="resultsContainer">
+						 
+						</tbody>
+					  </table>
+					</div>
+			    </section>
+			</div>
+			<div class="tab-content" id="content2">
+			  <section id="tables">
+				<div class="overflow-auto">
+				  <table class="striped">
+					<thead>
+					  <tr>
+						<th scope="col">Name</th>
+						<th scope="col">Description</th>
+						<th scope="col">Category</th>
+						<th scope="col">Priority</th>
+					  </tr>
+					</thead>
+					<tbody id="rulesBody">
+					 
+					</tbody>
+				  </table>
+				</div>
+			  </section>
+			</div>
+		  </div>
+	 </article>
+	 <article class="full-width-card" style="margin-top:1rem;" id="error">
+		<h3>Error</h3>
+		<p id="errorPara"></p>
+	 </article>
+	</main>
+    <footer class="header-grid">
+      <medium>Built by <a href="https://panangipalli-sai-charan.onrender.com">Panangipalli Sai Charan</a> |
+        <a href="https://github.com/monkeyluffy824/salesforce-flow-analyzer/issues">Report issues</a
+        ></medium>
+    </footer>
 	<script src="popup.js" type="module"></script>
 	<script src="rulesbook.js" type="module"></script>
-	
 </body>
