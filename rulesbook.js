@@ -13,7 +13,6 @@ export const rulesObjectMain={
 							for(let elem in flowDataObject.availableElements){
 								let val= flowDataObject.availableElements[elem];
 								const regexExp= new RegExp(`^${val}[\\s_*.-]*\\d+$`);
-								console.log(flowDataObject[`${val}`]);
 								for(let sub in flowDataObject[`${val}`]){
 									let actName=flowDataObject[`${val}`][sub].name;
 									let res=regexExp.test(flowDataObject[`${val}`][sub].name);
