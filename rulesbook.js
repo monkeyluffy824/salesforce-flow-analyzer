@@ -109,7 +109,7 @@ export const rulesObjectMain={
 							for(let ind in flowDataObject.dmlLoopNamesArray){
 									miniString+=`${flowDataObject.dmlLoopNamesArray[ind]}; `;
 							}
-							resObject.failedElements.push(`The following getRecords [${miniString}] found inside loops`);
+							resObject.failedElements.push(`The dmlOperation(s) [${miniString}] found inside above  loops`);
 						}
 						
 						return resObject;

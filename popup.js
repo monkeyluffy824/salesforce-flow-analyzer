@@ -1,5 +1,4 @@
 import {rulesObjectMain} from './rulesbook.js'
-console.log('Happy Flow!!!');
 const submitFormTag = document.getElementById("uploadForm");
 const fileInputTag = document.getElementById("fileInput");
 const errorTag = document.getElementById("error");
@@ -34,7 +33,7 @@ let desicionsReferencesSet= new Set();
 let finalResultsObject=undefined;
 
 let rulesObject=rulesObjectMain; // There will be total of 12 rules, which will be Stored in local storage along with preferences in future verisons.
-
+let firstLoopname='';
 
 
 fileInputTag.addEventListener('change',(event)=>{
@@ -70,7 +69,6 @@ function renderRulesTable(){
 }
 
 function rulesExecutor(){
-	console.log(rulesObject);
 	let resultsObject=[];
 	for(let rule of Object.values(rulesObject)){
 		let resObject={};
@@ -130,7 +128,6 @@ function ruleRunner(){
 					  </table>
 					</div>`;
 	let results=rulesExecutor();
-	console.log(results);
 	const resTabBody= document.getElementById('resultsTableBody');
 	for(let index in results){
 		
@@ -188,26 +185,35 @@ function loopingThroughReferences(targetReference,node){
 		let elementName=filtered[0]?.textContent;
 		if(targetReference==elementName){
 			completedReferences.add(targetReference);
-			const targetChildrenArray = Array.from(childrenArray.filter(child=> child.tagName=='connector')[0]?.children)?.filter(subChild=>subChild.tagName=='targetReference');
+			if(stackingLoops.has(node.tagName)){
+				stackingLoops.set(node.tagName,stackingLoops.get(node.tagName)+`;${targetReference}`);
+			}else{
+				stackingLoops.set(node.tagName,targetReference);
+			}
+			let targetChildrenArray=[];
+			if(node.tagName=='loops'){
+				targetChildrenArray = Array.from(childrenArray.filter(child=>child.tagName=='noMoreValuesConnector')[0]?.children)?.filter(subChild=>subChild.tagName=='targetReference');
+			}else{
+				targetChildrenArray = Array.from(childrenArray.filter(child=> child.tagName=='connector')[0]?.children)?.filter(subChild=>subChild.tagName=='targetReference');
+
+			}
 			targetReference= targetChildrenArray[0] ? targetChildrenArray[0].textContent : targetReference;
-			console.log(targetReference,elementName);
-			stackingLoops.set(node.tagName,targetReference);
-			if(flowDataObject.loopNamesArray.includes(targetReference)){
+			if(flowDataObject.loopNamesArray.includes(targetReference) && firstLoopname==targetReference){
 				if(stackingLoops.has('recordLookups')){
 					flowDataObject.isSOQLInsideLoop=true;
 					flowDataObject.soqlLoopNamesArray.push(stackingLoops.get('recordLookups'));
 				}
 				if(stackingLoops.has('recordUpdates')){
 					flowDataObject.isDMLInsideLoop=true;
-					flowDataObject.soqlLoopNamesArray.push(stackingLoops.get('recordUpdates'));
+					flowDataObject.dmlLoopNamesArray.push(stackingLoops.get('recordUpdates'));
 				}
 				if(stackingLoops.has('recordDeletes')){
 					flowDataObject.isDMLInsideLoop=true;
-					flowDataObject.soqlLoopNamesArray.push(stackingLoops.get('recordDeletes'));
+					flowDataObject.dmlLoopNamesArray.push(stackingLoops.get('recordDeletes'));
 				}
 				if(stackingLoops.has('recordCreates')){
 					flowDataObject.isDMLInsideLoop=true;
-					flowDataObject.soqlLoopNamesArray.push(stackingLoops.get('recordCreates'));
+					flowDataObject.dmlLoopNamesArray.push(stackingLoops.get('recordCreates'));
 				}
 				return;
 			}
@@ -241,7 +247,6 @@ function findingNullChecks(){
 						if(outputReferencesSet.has(grandChild2.textContent)){
 							Array.from(child[0].children).filter(gc=>gc.tagName=='operator').forEach(subZero=>{
 								if(subZero.textContent=='IsNull'){
-									console.log(grandChild2.textContent);
 									outputReferencesSet.delete(grandChild2.textContent);
 								}
 							});
@@ -274,6 +279,7 @@ submitFormTag.addEventListener("submit", (e)=>{
 	isFlowParsedSuccessFully=false;
 	analysisButtonTag.style.display="none";
 	errorTag.style.display =  "none";
+	outputReferencesSet = new Set();
 	
 	 if(fileInputTag.files.length===0){
 		 errorTag.style.display = "inline-block" ;
@@ -282,7 +288,6 @@ submitFormTag.addEventListener("submit", (e)=>{
 	 }
 	 
 	 const file= fileInputTag.files[0];
-	 console.log(file.type);
 	 if(!allowedFileTypes.includes(file.type)){
 		errorTag.style.display = "inline-block" ;
 		errorTagPara.textContent='Only xml files are allowed to analyze';
@@ -311,7 +316,6 @@ submitFormTag.addEventListener("submit", (e)=>{
 		completedReferences = new Set();
 		stackingLoops = new Map();
 		xmlText= reader.result;
-		//console.log(xmlText);
 		xmlDOM = praser.parseFromString(xmlText,'text/xml');
 		
 		if(xmlDOM.children[0].nodeName=='Flow'){
@@ -396,13 +400,14 @@ submitFormTag.addEventListener("submit", (e)=>{
 							loopDataObject['iterationOrder']=loopChild.textContent;
 						}else if(loopChild.nodeName=='name'){
 							flowDataObject.loopNamesArray.push(loopChild.textContent);
+							firstLoopname=loopChild.textContent;
 						}else if(loopChild.nodeName=='nextValueConnector'){
-							console.log('inside target value connector',);
 							loopingIndex=0;
 							completedReferences = new Set();
 							stackingLoops = new Map();
 							const targetChildArray = Array.from(loopChild.children).filter(subChild=>subChild.tagName=='targetReference');
 							if(targetChildArray[0]?.textContent){
+								
 								loopingThroughReferences(targetChildArray[0]?.textContent,flowNode);
 							}
 							
@@ -435,7 +440,6 @@ submitFormTag.addEventListener("submit", (e)=>{
 					const faultChildNodes = Array.from(child.children).filter(subChild=>subChild.tagName=='faultConnector');
 					
 					if(faultChildNodes.length<=0){
-						console.log(faultChildNodes);
 						flowDataObject['isFaultsPresentForAllDMLElements']=false;
 						flowDataObject.dmlElementsWithoutFaults.push(childname);
 					}
@@ -486,14 +490,12 @@ submitFormTag.addEventListener("submit", (e)=>{
 				flowDataObject['areAllNullChecksPresent']=false;
 				flowDataObject['missinglookupReferences']= Array.from(outputReferencesSet);
 			}
-			console.log(flowDataObject);
 			isFlowParsedSuccessFully = true;
 			flowDataObject.variables?.forEach(varName=>{
 				findUnusedVariables(xmlText,varName.name);
 			});
 			successTag.textContent='Flow parsed successfully,to start analysis please click on Start Analysis Button.'
 		}
-		console.log(isFlowParsedSuccessFully,analysisButtonTag.style.display);
 		analysisButtonTag.style.display = isFlowParsedSuccessFully ? "inline-block" : "none";
 		
 	 }

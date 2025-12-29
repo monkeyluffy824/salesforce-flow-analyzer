@@ -68,7 +68,7 @@ p {
 .header-grid {
   display: grid;
   grid-template-columns: 1fr 1fr; 
-  gap: 10rem;
+  gap: 4rem;
 }
 
 .tabs-card input[type="radio"] { display: none; }
