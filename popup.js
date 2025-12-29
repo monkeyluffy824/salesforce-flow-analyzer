@@ -316,6 +316,11 @@ submitFormTag.addEventListener("submit", (e)=>{
 		completedReferences = new Set();
 		stackingLoops = new Map();
 		xmlText= reader.result;
+		if(!xmlText.includes('soap.sforce.com')){
+			errorTag.style.display = "inline-block" ;
+			errorTagPara.textContent='Only salesforce flow xml files are allowed to analyze';
+			 return; 
+		}
 		xmlDOM = praser.parseFromString(xmlText,'text/xml');
 		
 		if(xmlDOM.children[0].nodeName=='Flow'){
