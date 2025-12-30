@@ -41,11 +41,11 @@ Download as CSV:
 <img width="1913" height="829" alt="image" src="https://github.com/user-attachments/assets/ec647cea-f24a-4e82-9efa-f4535e92f134" />
 
 ## RoadMap:
-Current Version:1.0.0
+####Current Version:1.0.0
 - 12 Analysis rules.
 - CSV Export
 - XML Validations and Simple UI.
-Future Considerations:
+####Future Considerations:
 - JSON Export Option
 - Multiple File Analysis
 - Custom Rule Configurations.
