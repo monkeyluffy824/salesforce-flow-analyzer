@@ -52,5 +52,7 @@ Download as CSV:
   - Multiple File Analysis
   - Custom Rule Configurations.
 
+## License:
+This project is licensed under the MIT License.
 
 
