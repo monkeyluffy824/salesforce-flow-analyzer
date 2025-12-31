@@ -22,6 +22,9 @@ Salesforce Flow Analyzer is a developer tool that performs static analysis on sa
 - Review the results and Download the results as CSV.
 - You can also check all 12 rules details in Rules Book Tab.
 
+## Installation:
+-Edge Browser: https://microsoftedge.microsoft.com/addons/detail/kdaladfndjjgjlaflegomjnfpaipcfid
+
 ## Screenshots
 Main Page:
 <img width="1891" height="816" alt="image" src="https://github.com/user-attachments/assets/ac890501-2552-4941-bcdd-36c90993d934" />
