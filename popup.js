@@ -31,6 +31,9 @@ let isFlowParsedSuccessFully = false;
 let outputReferencesSet = new Set();
 let desicionsReferencesSet= new Set();
 let finalResultsObject=undefined;
+let desicionReferencesInsideLoop = new Set();
+let completeDesicionsReferencesInsideLoop=[];
+
 
 let rulesObject=rulesObjectMain; // There will be total of 12 rules, which will be Stored in local storage along with preferences in future verisons.
 let firstLoopname='';
@@ -180,7 +183,7 @@ function findHardCodedIds(node,path=""){
 function loopingThroughReferences(targetReference,node){
 	
 	if(node.nodeType == Node.ELEMENT_NODE){
-		const childrenArray = Array.from(node.childNodes);
+		const childrenArray = Array.from(node.children);
 		const filtered=childrenArray.filter(child=> child.nodeType === 1 && child.tagName ==='name');
 		let elementName=filtered[0]?.textContent;
 		if(targetReference==elementName){
@@ -192,30 +195,66 @@ function loopingThroughReferences(targetReference,node){
 			}
 			let targetChildrenArray=[];
 			if(node.tagName=='loops'){
-				targetChildrenArray = Array.from(childrenArray.filter(child=>child.tagName=='noMoreValuesConnector')[0]?.children)?.filter(subChild=>subChild.tagName=='targetReference');
+				if(elementName!= firstLoopname){
+					targetChildrenArray = Array.from(childrenArray.filter(child=>child.tagName=='noMoreValuesConnector')[0]?.children)?.filter(subChild=>subChild.tagName=='targetReference');
+				}else{
+					if(desicionReferencesInsideLoop.size>0){
+						targetChildrenArray=[...desicionReferencesInsideLoop].slice(0, 1);
+						desicionReferencesInsideLoop.delete(desicionReferencesInsideLoop.values().next().value);
+					}
+					
+				}
+				
+			}else if(node.tagName=='decisions'){
+					let rulesConnectorArray = [];
+					if(childrenArray.filter(child=>child.tagName=='defaultConnector')[0]?.children){
+						rulesConnectorArray.push(...Array.from(childrenArray.filter(child=>child.tagName=='defaultConnector')[0]?.children)?.filter(subChild=>subChild.tagName=='targetReference'));
+
+					}
+					let rulesArray=childrenArray.filter(child=>child.tagName=='rules');
+					for(let i in rulesArray){
+						let k=Array.from(Array.from(rulesArray[i].children).filter(conChild=>conChild.tagName=='connector')[0]?.children)?.filter(subChild=>subChild.tagName=='targetReference');
+						rulesConnectorArray.push(...k);
+						
+					}
+					
+					rulesConnectorArray.forEach(tarRef=>desicionReferencesInsideLoop.add(tarRef));
+					targetChildrenArray=[...desicionReferencesInsideLoop].slice(0, 1);
+					desicionReferencesInsideLoop.delete(desicionReferencesInsideLoop.values().next().value);
+				
 			}else{
-				targetChildrenArray = Array.from(childrenArray.filter(child=> child.tagName=='connector')[0]?.children)?.filter(subChild=>subChild.tagName=='targetReference');
+				if(childrenArray.filter(child=> child.tagName=='connector')[0]?.children){
+					targetChildrenArray = Array.from(childrenArray.filter(child=> child.tagName=='connector')[0]?.children)?.filter(subChild=>subChild.tagName=='targetReference');
+				}else{
+					return;
+				}
 
 			}
 			targetReference= targetChildrenArray[0] ? targetChildrenArray[0].textContent : targetReference;
 			if(flowDataObject.loopNamesArray.includes(targetReference) && firstLoopname==targetReference){
-				if(stackingLoops.has('recordLookups')){
-					flowDataObject.isSOQLInsideLoop=true;
-					flowDataObject.soqlLoopNamesArray.push(stackingLoops.get('recordLookups'));
+				if(desicionReferencesInsideLoop.size==0){
+					if(stackingLoops.has('recordLookups')){
+						flowDataObject.isSOQLInsideLoop=true;
+						flowDataObject.soqlLoopNamesArray.push(stackingLoops.get('recordLookups'));
+					}
+					if(stackingLoops.has('recordUpdates')){
+						flowDataObject.isDMLInsideLoop=true;
+						flowDataObject.dmlLoopNamesArray.push(stackingLoops.get('recordUpdates'));
+					}
+					if(stackingLoops.has('recordDeletes')){
+						flowDataObject.isDMLInsideLoop=true;
+						flowDataObject.dmlLoopNamesArray.push(stackingLoops.get('recordDeletes'));
+					}
+					if(stackingLoops.has('recordCreates')){
+						flowDataObject.isDMLInsideLoop=true;
+						flowDataObject.dmlLoopNamesArray.push(stackingLoops.get('recordCreates'));
+					}
+					return;
+				}else{
+					targetReference = [...desicionReferencesInsideLoop][0].textContent;
+					desicionReferencesInsideLoop.delete(desicionReferencesInsideLoop.values().next().value);
+					completedReferences= new Set();
 				}
-				if(stackingLoops.has('recordUpdates')){
-					flowDataObject.isDMLInsideLoop=true;
-					flowDataObject.dmlLoopNamesArray.push(stackingLoops.get('recordUpdates'));
-				}
-				if(stackingLoops.has('recordDeletes')){
-					flowDataObject.isDMLInsideLoop=true;
-					flowDataObject.dmlLoopNamesArray.push(stackingLoops.get('recordDeletes'));
-				}
-				if(stackingLoops.has('recordCreates')){
-					flowDataObject.isDMLInsideLoop=true;
-					flowDataObject.dmlLoopNamesArray.push(stackingLoops.get('recordCreates'));
-				}
-				return;
 			}
 			loopingIndex=-1;
 			//return loopingThroughReferences(targetReference,flowNode);
@@ -280,7 +319,8 @@ submitFormTag.addEventListener("submit", (e)=>{
 	analysisButtonTag.style.display="none";
 	errorTag.style.display =  "none";
 	outputReferencesSet = new Set();
-	
+	let desicionReferencesInsideLoop = new Set();
+	let completeDesicionsReferencesInsideLoop=[];
 	 if(fileInputTag.files.length===0){
 		 errorTag.style.display = "inline-block" ;
 		 errorTagPara.textContent='Please select a file to submit';
@@ -451,14 +491,14 @@ submitFormTag.addEventListener("submit", (e)=>{
 				}else if(child.nodeName=='recordDeletes'){
 					const childname= Array.from(child.children).filter(subChild=>subChild.tagName=='name')[0].textContent;
 					const faultChildNodes = Array.from(child.children).filter(subChild=>subChild.tagName=='faultConnector');
-					if(!faultChildNodes || faultChildNodes.length>0){
+					if(!faultChildNodes || faultChildNodes.length<=0){
 						flowDataObject['isFaultsPresentForAllDMLElements']=false;
 						flowDataObject.dmlElementsWithoutFaults.push(childname);
 					}
 				}else if(child.nodeName=='recordCreates'){
 					const childname= Array.from(child.children).filter(subChild=>subChild.tagName=='name')[0].textContent;
 					const faultChildNodes = Array.from(child.children).filter(subChild=>subChild.tagName=='faultConnector');
-					if(!faultChildNodes || faultChildNodes.length>0){
+					if(!faultChildNodes || faultChildNodes.length<=0){
 						flowDataObject['isFaultsPresentForAllDMLElements']=false;
 						flowDataObject.dmlElementsWithoutFaults.push(childname);
 					}
