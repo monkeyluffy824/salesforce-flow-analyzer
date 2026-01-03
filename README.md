@@ -1,5 +1,5 @@
 # salesforce-flow-analyzer
-A Browser Extension that analyzes Salesforce Flow XML Files for best practices, performance issues and common mistakes, providing developers with instant feedback.
+A Browser Extension that analyzes Salesforce Flow XML Files for best practices, performance issues and common mistakes, providing developers with instant feedback. No data is collected, files are processed in browser locally only.
 
 
 ## Overview
@@ -21,6 +21,9 @@ Salesforce Flow Analyzer is a developer tool that performs static analysis on sa
 - Click on "Start Analysis" Button.
 - Review the results and Download the results as CSV.
 - You can also check all 12 rules details in Rules Book Tab.
+
+## Installation:
+-Edge Browser: https://microsoftedge.microsoft.com/addons/detail/kdaladfndjjgjlaflegomjnfpaipcfid
 
 ## Screenshots
 Main Page:
