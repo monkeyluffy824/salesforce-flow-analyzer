@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Salesforce Flow Analyzer",
-  "version": "1.0",
+  "version": "1.0.2",
   "description": "An extension that analyzes Salesforce Flow XML for best practices, performance issues, and common mistakes with instant feedback.",
   "icons": {
     "48": "icons/salesforce-flow-analyzer_48.png",
