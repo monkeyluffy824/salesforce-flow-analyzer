@@ -25,13 +25,28 @@ Salesforce Flow Analyzer is a developer tool that performs static analysis on sa
 ## Installation:
 -Edge Browser: https://microsoftedge.microsoft.com/addons/detail/kdaladfndjjgjlaflegomjnfpaipcfid
 - Chrome Browser : https://chromewebstore.google.com/detail/salesforce-flow-analyzer/khebcjhnfkfggngggmpdlaefnmhkpnmi
+
+## Rules:
+| Name | Description | Category | Priority |
+|------|-------------|----------|----------|
+| Flow Has Description | Checks if flow has a description explaining its purpose | Documentation | Low |
+| Elements Have Labels | Checks for generic default names like `Loop_1` etc | Maintainability | Low |
+| Outdated API Version | Checks if flow uses an old Salesforce API version | Best Practices | Low |
+| Variable Descriptions | Checks if variables have descriptions or not | Documentation | Low |
+| Flow Complexity | Checks if Flow has too many elements (over 75) | Maintainability | Medium |
+| Hardcoded Record IDs | Checks for hardcoded Salesforce IDs that break when deployed to other orgs | Security | Critical |
+| SOQL in Loops | Checks if queries are inside loops | Governor Limits | Critical |
+| DML in Loops | Checks if record operations are inside loops | Governor Limits | Critical |
+| Missing Fault Paths | Checks if record operations have error handling configured | Best Practices | High |
+| Missing Null Checks | Checks if flow verifies Get Records before using them | Best Practices | High |
+| Formula Complexity | Checks for long or complex formulas (over 300 characters) | Maintainability | Low |
+| Unused Variables | Checks for variables that are declared but never used | Best Practices | Low |
+
 ## Screenshots
 Main Page:
 <img width="1891" height="816" alt="image" src="https://github.com/user-attachments/assets/ac890501-2552-4941-bcdd-36c90993d934" />
 Upload XML File:
 <img width="1907" height="937" alt="image" src="https://github.com/user-attachments/assets/f1d9db46-eb21-4781-9671-482a75a73b2d" />
-Rules Book:
-<img width="1886" height="906" alt="image" src="https://github.com/user-attachments/assets/9865a659-c151-449b-baef-e7de72aca621" />
 Analyze Tab:
 <img width="1590" height="328" alt="image" src="https://github.com/user-attachments/assets/cf08c989-eef6-4bb1-89a8-a3baa0137247" />
 Results:
