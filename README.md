@@ -42,6 +42,9 @@ Salesforce Flow Analyzer is a developer tool that performs static analysis on sa
 | Formula Complexity | Checks for long or complex formulas (over 300 characters) | Maintainability | Low |
 | Unused Variables | Checks for variables that are declared but never used | Best Practices | Low |
 
+## Demo:
+![Demo](demos/salesforce-flow-analyzer-demo.gif)
+
 ## Screenshots
 Main Page:
 <img width="1891" height="816" alt="image" src="https://github.com/user-attachments/assets/ac890501-2552-4941-bcdd-36c90993d934" />
