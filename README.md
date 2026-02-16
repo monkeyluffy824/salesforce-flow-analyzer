@@ -3,13 +3,14 @@ A Browser Extension that analyzes Salesforce Flow XML Files for best practices, 
 
 
 ## Overview
-Salesforce Flow Analyzer is a developer tool that performs static analysis on salesforce Flow XML files. It Identifies 12 types of issues including governer limit violations,security risks, maintainability problems and documentation gaps.
+A fully offline browser extension that analyzes Salesforce Flow XML files to identify common issues and best-practice violations before deployment. Implemented a rule-based analyzer covering 12 checks, including governor-limit risks, security misconfigurations, and frequent design mistakes in declarative automation. Designed for instant feedback with no external dependencies, helping developers and admins catch problems early and improve Flow reliability.
 
 ## Features
 ### Comprehensive Analysis
 - **12 Analysis rule** covering critical to low priority issues
 - **4 severity levels**: Critical,High,Medium,Low
 - **6 categories**: Governer Limits, Security, Best Practices, Maintainability, Documentation, Performance.
+- **Fully Offline Processing:** Your flow logic is never sent to any external application, and no data is collected. XML files are processed locally in your browser only.
 
 ### UI & Export Capabilities:
 - Clean and simple UI.
